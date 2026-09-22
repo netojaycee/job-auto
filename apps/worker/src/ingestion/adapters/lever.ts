@@ -1,4 +1,4 @@
-import type { JobAdapter } from "../types.js";
+import type { JobAdapter } from "../types";
 
 interface LeverPosting {
   id: string;

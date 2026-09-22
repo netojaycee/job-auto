@@ -1,6 +1,7 @@
-import "dotenv/config";
-import { seedJobSources } from "./seed-sources.js";
-import { ingestAllSources } from "./ingest.js";
+import * as dotenv from "dotenv";
+dotenv.config();
+import { seedJobSources } from "./seed-sources";
+import { ingestAllSources } from "./ingest";
 
 async function main() {
   await seedJobSources();

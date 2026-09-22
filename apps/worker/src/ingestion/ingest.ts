@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { getDb, jobSources, jobPostings, crawlRuns } from "@job-auto/db";
-import { ADAPTERS } from "./adapters/index.js";
-import type { NormalizedPosting } from "./types.js";
+import { ADAPTERS } from "./adapters/index";
+import type { NormalizedPosting } from "./types";
 
 function contentHash(posting: NormalizedPosting): string {
   return createHash("sha256")

@@ -1,5 +1,5 @@
-import type { JobAdapter } from "../types.js";
-import { htmlToPlainText } from "./html.js";
+import type { JobAdapter } from "../types";
+import { htmlToPlainText } from "./html";
 
 interface RemoteOkPosting {
   id?: string;
