@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Standalone output is what apps/web/Dockerfile copies into the runtime image.
+  output: "standalone",
 };
 
 export default nextConfig;

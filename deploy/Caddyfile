@@ -1,0 +1,7 @@
+# Reverse proxy + automatic HTTPS for the subdomain. Only the web app is
+# public-facing; the worker has no HTTP surface of its own.
+# Replace the placeholder with the real subdomain before first deploy.
+
+job-auto.yourdomain.com {
+	reverse_proxy web:3000
+}

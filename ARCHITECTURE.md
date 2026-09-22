@@ -123,10 +123,30 @@ Disk stays light because CVs/cover letters/tailored docs live in R2, not local d
 
 Rule of thumb for concurrency: `max_concurrent_playwright_jobs ≈ (available_RAM_GB - 2GB_for_app_stack) / 0.5GB`.
 
-## 10. Non-negotiables (revisit only with explicit discussion)
+## 11. Deployment model
+
+**The server never receives the source code.** The only things that ever reach the VPS are:
+
+- `deploy/docker-compose.yml` — the production stack definition
+- `deploy/Caddyfile` — reverse proxy + automatic HTTPS for the subdomain
+- a server-side `.env` — provisioned via Doppler (or an equivalent free secrets manager) or created by hand over SSH; CI never generates or transmits it
+
+Everything else — the actual `web` and `worker` code — ships as **prebuilt Docker images**, built by CI from the repo and pushed to a registry (GHCR is the default: free with GitHub, no extra account needed). The server's compose file references images by tag and pulls, it never builds from source.
+
+**Pipeline:**
+1. On push to `main`: CI checks out the repo, builds `apps/web/Dockerfile` and `apps/worker/Dockerfile`, tags images with the git SHA, pushes both to the registry.
+2. Deploy step: CI syncs **only** `deploy/docker-compose.yml` and `deploy/Caddyfile` to the server (scp/rsync over SSH), sets `IMAGE_TAG` to the new SHA, then runs `docker compose --env-file .env pull && docker compose --env-file .env up -d` over SSH.
+3. The server's `.env` is a standing file that predates any given deploy — CI reads nothing from it and writes nothing to it. Rotate/update it out-of-band (Doppler sync or manual SSH edit) whenever a secret changes.
+
+**Local dev is intentionally decoupled from all of this** — no Docker needed locally. Point the root `.env` at whatever Postgres/Redis you already have running (e.g. via DBngin) and run `pnpm dev:web` / `pnpm dev:worker` directly. `deploy/docker-compose.yml` is never invoked locally; it's a deploy-only artifact, hence living under `deploy/` rather than the repo root.
+
+Before first deploy: replace the placeholder domain in `deploy/Caddyfile`, and provision `REGISTRY`, `POSTGRES_PASSWORD`, and every API key in the server's `.env` (see `deploy/.env.example` for the full list — that file documents the shape, it is not itself deployed).
+
+## 12. Non-negotiables (revisit only with explicit discussion)
 
 - LinkedIn/Indeed Easy Apply automation stays off by default; Tier C is deferred, not cancelled.
 - Applications are sent from the user's own inbox (Gmail OAuth), never from a platform email address.
 - Tailoring never fabricates experience.
 - Dedup is enforced at the DB constraint level, not just application logic.
 - One AI-provider interface, swappable between Anthropic and local Ollama without touching call sites.
+- The server never receives application source code — only `deploy/docker-compose.yml`, `deploy/Caddyfile`, and a hand/Doppler-provisioned `.env`. CI/CD ships images and config, nothing else.

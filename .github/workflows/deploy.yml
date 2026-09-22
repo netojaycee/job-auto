@@ -1,0 +1,73 @@
+# Builds web/worker images from source and pushes them to GHCR, then syncs
+# ONLY deploy/docker-compose.yml + deploy/Caddyfile to the server and tells it
+# to pull the new images. The server's .env is untouched by this workflow —
+# see ARCHITECTURE.md §11.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/job-auto-web:${{ github.sha }},ghcr.io/${{ env.IMAGE_OWNER }}/job-auto-web:latest
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/worker/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/job-auto-worker:${{ github.sha }},ghcr.io/${{ env.IMAGE_OWNER }}/job-auto-worker:latest
+
+  deploy-config:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Only these two files ever leave the CI runner for the server — no
+      # source, no node_modules, no .env. Requires SSH_HOST/SSH_USER/SSH_KEY
+      # and DEPLOY_PATH secrets set in the repo settings.
+      - name: Sync compose + Caddyfile to server
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avz
+          path: deploy/docker-compose.yml deploy/Caddyfile
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_KEY }}
+
+      - name: Pull new images and restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            export IMAGE_TAG=${{ github.sha }}
+            docker compose --env-file .env pull
+            docker compose --env-file .env up -d
