@@ -6,4 +6,3 @@ dist/
 *.log
 .turbo/
 .DS_Store
-packages/db/drizzle/
