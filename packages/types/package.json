@@ -1,0 +1,11 @@
+{
+  "name": "@job-auto/types",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
