@@ -4,7 +4,7 @@ How to use this file: each task gets checked off `[x]` when actually done and ve
 
 ## Current focus
 
-Profile builder is fully done — CV upload, parsing, clarifying questions, and AI-suggested job preferences all working end-to-end against real services. Next task: **wallet scaffolding (`wallets` + `wallet_ledger` tables, balance display in UI, admin grant endpoint — no real payment integration yet).**
+Wallet scaffolding is done (balance display, admin grant, cluster-aware resolution). Next task: **admin panel skeleton — list users, view/grant wallet balance from a UI (the grant endpoint already exists), create cluster, add/remove cluster members.**
 
 ---
 
@@ -19,7 +19,7 @@ Profile builder is fully done — CV upload, parsing, clarifying questions, and 
 - [x] Canonical profile synthesis (AI call that produces `canonical_profile_text`) — 2026-09-22. `apps/web/src/lib/profile-ai.ts::synthesizeCanonicalProfile`, re-run on both CV upload and profile save.
 - [x] Clarifying-questions flow (AI asks 3-6 targeted questions post-CV-parse, answers merge into profile) — 2026-09-22. `generateClarifyingQuestions` runs alongside CV parsing, stored as `profiles.clarifying_qa` (jsonb `{question, answer}[]`); `/profile` page renders unanswered ones; `POST /api/profile/clarify` saves answers and resynthesizes. Verified live: got 5 CV-specific (not generic) questions, answered them, and confirmed the answers (AWS services, Terraform, Spark version, remote/location preference) showed up correctly in the resynthesized canonical profile.
 - [x] Job preferences UI, AI-suggested defaults from CV, user-editable — 2026-09-22. `/preferences` page against the existing `job_preferences` table; "Suggest from my CV" button calls `POST /api/preferences/suggest` (AI, grounded in parsed CV + canonical profile, prefills the form — doesn't save until the user submits). Verified live: suggestion correctly reflected an answered clarifying question ("remote only, Lagos, US/EU timezones") that postdated the original CV upload, confirming it reads the current profile state, not a stale snapshot.
-- [ ] Wallet scaffolding: `wallets` + `wallet_ledger` tables, balance display in UI, admin grant endpoint (no real payment yet)
+- [x] Wallet scaffolding: `wallets` + `wallet_ledger` tables, balance display in UI, admin grant endpoint (no real payment yet) — 2026-09-22. `apps/web/src/lib/wallet.ts` (`getOrCreateWallet`, `getEffectiveWallet` — resolves to the cluster wallet if the user has a `clusterId`, else their own personal wallet, per the cluster-sharing model in ARCHITECTURE.md §6; `grantCredits` updates balance + writes a ledger row). `GET /api/wallet` (balance for the current session), `POST /api/admin/wallet/grant` (role==="admin" gated). Balance shown on `/dashboard`. Verified live: fresh user starts at 0, grant correctly 403s for a non-admin, works after promoting to admin via DB, and both `wallets.balance` and a matching `wallet_ledger` row update correctly.
 - [ ] Admin panel skeleton: list users, view/grant wallet balance, create cluster, add/remove cluster members
 - [x] AI provider abstraction (`packages/ai`) supporting Anthropic now, interface ready for Ollama swap — 2026-09-22. Also verified live against Groq's free OpenAI-compatible endpoint (`AI_PROVIDER=openai`, `AI_BASE_URL=https://api.groq.com/openai/v1`, `AI_MODEL=openai/gpt-oss-120b`) — this is what the profile builder testing above actually ran against. Note: Groq's model catalog changes; if a model 404s, check `GET https://api.groq.com/openai/v1/models`.
 
