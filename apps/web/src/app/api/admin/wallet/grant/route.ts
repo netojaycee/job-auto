@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/admin";
 import { grantCredits } from "@/lib/wallet";
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session || role !== "admin") {
+  const session = await requireAdminSession();
+  if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
