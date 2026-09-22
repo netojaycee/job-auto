@@ -4,7 +4,7 @@ import { getDb, profiles } from "@job-auto/db";
 import { uploadObject } from "@job-auto/storage";
 import { getSession } from "@/lib/session";
 import { extractTextFromCv } from "@/lib/cv-parser";
-import { parseCvText, synthesizeCanonicalProfile } from "@/lib/profile-ai";
+import { generateClarifyingQuestions, parseCvText, synthesizeCanonicalProfile } from "@/lib/profile-ai";
 
 const ALLOWED_TYPES = new Set([
   "application/pdf",
@@ -48,12 +48,16 @@ export async function POST(request: Request) {
   const db = getDb();
   const [existing] = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
 
-  const canonicalProfileText = await synthesizeCanonicalProfile({
-    parsedCv,
-    aboutMeText: existing?.aboutMeText ?? null,
-    linkedinUrl: existing?.linkedinUrl ?? null,
-    otherLinks: existing?.otherLinks ?? [],
-  });
+  const [canonicalProfileText, clarifyingQuestions] = await Promise.all([
+    synthesizeCanonicalProfile({
+      parsedCv,
+      aboutMeText: existing?.aboutMeText ?? null,
+      linkedinUrl: existing?.linkedinUrl ?? null,
+      otherLinks: existing?.otherLinks ?? [],
+    }),
+    generateClarifyingQuestions(parsedCv),
+  ]);
+  const clarifyingQa = clarifyingQuestions.map((question) => ({ question, answer: null }));
 
   await db
     .insert(profiles)
@@ -61,6 +65,7 @@ export async function POST(request: Request) {
       userId,
       rawCvFileRef: key,
       parsedCvJson: parsedCv,
+      clarifyingQa,
       canonicalProfileText,
       canonicalProfileUpdatedAt: new Date(),
     })
@@ -69,10 +74,11 @@ export async function POST(request: Request) {
       set: {
         rawCvFileRef: key,
         parsedCvJson: parsedCv,
+        clarifyingQa,
         canonicalProfileText,
         canonicalProfileUpdatedAt: new Date(),
       },
     });
 
-  return NextResponse.json({ parsedCv, canonicalProfileText });
+  return NextResponse.json({ parsedCv, canonicalProfileText, clarifyingQa });
 }

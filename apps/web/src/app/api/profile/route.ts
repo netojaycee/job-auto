@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       aboutMeText,
       linkedinUrl,
       otherLinks,
+      clarifyingQa: existing.clarifyingQa ?? undefined,
     });
   }
 

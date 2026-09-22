@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import type { ParsedCv } from "@job-auto/types";
+import type { ClarifyingQa, ParsedCv } from "@job-auto/types";
 
 interface ProfileState {
   linkedinUrl: string | null;
   otherLinks: string[];
   aboutMeText: string | null;
   parsedCvJson: ParsedCv | null;
+  clarifyingQa: ClarifyingQa[] | null;
   canonicalProfileText: string | null;
 }
 
@@ -24,6 +25,8 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [answering, setAnswering] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -35,6 +38,9 @@ export default function ProfilePage() {
           setLinkedinUrl(data.profile.linkedinUrl ?? "");
           setOtherLinksText((data.profile.otherLinks ?? []).join("\n"));
           setAboutMeText(data.profile.aboutMeText ?? "");
+          setAnswers(
+            (data.profile.clarifyingQa ?? []).map((qa: ClarifyingQa) => qa.answer ?? ""),
+          );
         }
       });
   }, [session]);
@@ -64,8 +70,30 @@ export default function ProfilePage() {
       otherLinks: prev?.otherLinks ?? [],
       aboutMeText: prev?.aboutMeText ?? null,
       parsedCvJson: data.parsedCv,
+      clarifyingQa: data.clarifyingQa,
       canonicalProfileText: data.canonicalProfileText,
     }));
+    setAnswers(new Array(data.clarifyingQa?.length ?? 0).fill(""));
+  }
+
+  async function handleAnswerQuestions(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setAnswering(true);
+    const res = await fetch("/api/profile/clarify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+    });
+    const data = await res.json();
+    setAnswering(false);
+    if (!res.ok) {
+      setError(data.error ?? "Couldn't save answers");
+      return;
+    }
+    setProfile((prev) =>
+      prev ? { ...prev, clarifyingQa: data.clarifyingQa, canonicalProfileText: data.canonicalProfileText } : prev,
+    );
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -95,6 +123,7 @@ export default function ProfilePage() {
             otherLinks: [],
             aboutMeText,
             parsedCvJson: null,
+            clarifyingQa: null,
             canonicalProfileText: data.canonicalProfileText,
           },
     );
@@ -120,6 +149,37 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+
+      {profile?.clarifyingQa && profile.clarifyingQa.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-2 font-medium">A few questions to sharpen your profile</h2>
+          <form onSubmit={handleAnswerQuestions} className="flex flex-col gap-3">
+            {profile.clarifyingQa.map((qa, i) => (
+              <div key={i}>
+                <label className="text-sm font-medium">{qa.question}</label>
+                <input
+                  className="mt-1 w-full border rounded px-3 py-2"
+                  value={answers[i] ?? ""}
+                  onChange={(e) =>
+                    setAnswers((prev) => {
+                      const next = [...prev];
+                      next[i] = e.target.value;
+                      return next;
+                    })
+                  }
+                />
+              </div>
+            ))}
+            <button
+              type="submit"
+              disabled={answering}
+              className="self-start rounded border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              {answering ? "Saving…" : "Save answers"}
+            </button>
+          </form>
+        </section>
+      )}
 
       <form onSubmit={handleSaveProfile} className="flex flex-col gap-3">
         <label className="text-sm font-medium">LinkedIn URL</label>

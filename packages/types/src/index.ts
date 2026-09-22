@@ -44,6 +44,19 @@ export interface ParsedCv {
   suggestedRoles: string[];
 }
 
+export interface ClarifyingQa {
+  question: string;
+  answer: string | null;
+}
+
+export interface JobPreferencesSuggestion {
+  roles: string[];
+  locations: string[];
+  remotePref: "remote" | "hybrid" | "onsite" | "any";
+  salaryFloor?: number;
+  industries: string[];
+}
+
 export interface JobMatchResult {
   jobPostingId: string;
   score: number;

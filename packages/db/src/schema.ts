@@ -120,6 +120,10 @@ export const profiles = pgTable("profiles", {
   linkedinUrl: text("linkedin_url"),
   otherLinks: jsonb("other_links").$type<string[]>().default([]),
   aboutMeText: text("about_me_text"),
+  // AI-generated post-CV-parse questions + user answers — folded into the
+  // canonical profile synthesis alongside aboutMeText. Null until a CV has
+  // been parsed at least once.
+  clarifyingQa: jsonb("clarifying_qa").$type<{ question: string; answer: string | null }[]>(),
   canonicalProfileText: text("canonical_profile_text"),
   canonicalProfileUpdatedAt: timestamp("canonical_profile_updated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
