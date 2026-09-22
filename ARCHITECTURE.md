@@ -23,7 +23,7 @@ LinkedIn/Indeed-style Easy Apply automation is **explicitly out of scope for now
 | Worker/agent service | NestJS (separate deployable) | Crawling, scoring, tailoring, applying — long-running, queue-driven, isolated from the web app |
 | DB | Postgres + Drizzle | Schema-as-code, migrations, raw SQL where needed for dedup/queue logic |
 | Queue | BullMQ (Redis) | Daily fan-out, per-user apply jobs, retries, per-source rate limiting |
-| AI | Anthropic API — Haiku 4.5 for high-volume/cheap tasks (parsing, scoring), Sonnet for CV tailoring/cover letters. Local fallback via Ollama (see §8) for offline mode. | Provider swap must go through one interface — never call the Anthropic SDK directly from business logic |
+| AI | Anthropic API (target for prod) — Haiku 4.5 for high-volume/cheap tasks (parsing, scoring), Sonnet for CV tailoring/cover letters. **Currently developing against Groq's free tier** (no paid subscription yet — see §8.1). Local fallback via Ollama (see §8) for offline mode. | Provider swap must go through one interface — never call the Anthropic SDK/any provider SDK directly from business logic |
 | File storage | Cloudflare R2 | CVs, tailored CVs, generated cover letters |
 | Email (notifications only) | Resend | Digest emails, alerts. **Never used to send applications** — see §5 |
 | Email (applications) | Gmail API via OAuth (per user) | Applications sent from the user's real inbox, in their Sent folder, replies come to them |
@@ -109,7 +109,38 @@ Out of scope for now per explicit decision. ToS prohibits automated Easy Apply; 
   5. Quality will be a notch below Claude for tailoring/cover letters — acceptable for occasional manual runs, not for daily production use at scale.
 - This mode is also what backs the admin "run now for this user" button — same mechanism.
 
-## 9. VPS sizing
+## 9. Free-tier cloud options (pre-launch development)
+
+No paid AI subscription yet, so development currently runs against **Groq's free tier** — a real cloud model, OpenAI-compatible API, zero cost. Works with `packages/ai`'s existing `openai`-provider path, no code changes:
+
+```
+AI_PROVIDER=openai
+AI_MODEL=openai/gpt-oss-120b
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_API_KEY=<groq key>
+```
+
+Groq's free-tier model catalog changes over time — if a model 404s, check `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $AI_API_KEY"` for what's currently available.
+
+**Gemini** is the other viable free-tier option (Google AI Studio issues free API keys with a generous daily quota) and also exposes an OpenAI-compatible endpoint, so it drops into the same `AI_PROVIDER=openai` path:
+
+```
+AI_PROVIDER=openai
+AI_MODEL=gemini-2.5-flash
+AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+AI_API_KEY=<gemini key>
+```
+
+**Before going live**, revisit the model choice deliberately rather than defaulting to whatever free tier was used during development — see the cost-tiering note below and confirm the final pick against then-current pricing/quality for both scoring (cheap, high-volume) and tailoring (fewer calls, higher quality bar, goes directly to employers).
+
+Rough cost tiering once on a paid provider, for the two-call-tier design in §2 (cheap model for scoring, better model for tailoring):
+
+| Tier | Candidates | Use |
+|---|---|---|
+| Cheap/high-volume | Gemini Flash, Claude Haiku 4.5 | CV parsing, per-job match scoring (called for every candidate job, every user, every day) |
+| Higher-quality/low-volume | Claude Sonnet 5 | CV tailoring, cover letters (called only for shortlisted jobs, output goes directly to an employer) |
+
+## 10. VPS sizing
 
 Design assumption for v1: tens to low hundreds of active users, Tier A + Tier B only (Tier C deferred, so no heavy LinkedIn browser farms yet).
 
@@ -124,6 +155,7 @@ Disk stays light because CVs/cover letters/tailored docs live in R2, not local d
 Rule of thumb for concurrency: `max_concurrent_playwright_jobs ≈ (available_RAM_GB - 2GB_for_app_stack) / 0.5GB`.
 
 ## 11. Deployment model
+
 
 **The server never receives the source code.** The only things that ever reach the VPS are:
 
