@@ -19,6 +19,31 @@ export interface CanonicalProfile {
   updatedAt: string;
 }
 
+export interface ParsedCvExperience {
+  company: string;
+  title: string;
+  startDate?: string;
+  endDate?: string;
+  summary: string;
+}
+
+export interface ParsedCvEducation {
+  institution: string;
+  degree: string;
+  field?: string;
+  endDate?: string;
+}
+
+export interface ParsedCv {
+  fullName?: string;
+  summary: string;
+  skills: string[];
+  experience: ParsedCvExperience[];
+  education: ParsedCvEducation[];
+  totalYearsExperience: number;
+  suggestedRoles: string[];
+}
+
 export interface JobMatchResult {
   jobPostingId: string;
   score: number;

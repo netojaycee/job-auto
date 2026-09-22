@@ -11,9 +11,13 @@
   "dependencies": {
     "@job-auto/ai": "workspace:*",
     "@job-auto/db": "workspace:*",
+    "@job-auto/storage": "workspace:*",
     "@job-auto/types": "workspace:*",
     "better-auth": "^1.7.5",
+    "drizzle-orm": "^0.44.7",
+    "mammoth": "^1.12.3",
     "next": "16.3.5",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
