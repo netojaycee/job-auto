@@ -8,6 +8,9 @@ COPY apps/web/package.json apps/web/
 COPY apps/worker/package.json apps/worker/
 COPY packages/db/package.json packages/db/
 COPY packages/ai/package.json packages/ai/
+COPY packages/storage/package.json packages/storage/
+COPY packages/wallet/package.json packages/wallet/
+COPY packages/queue/package.json packages/queue/
 COPY packages/types/package.json packages/types/
 RUN pnpm install --frozen-lockfile
 
@@ -23,4 +26,6 @@ COPY --from=build /repo/apps/worker/dist ./apps/worker/dist
 COPY --from=build /repo/apps/worker/node_modules ./apps/worker/node_modules
 COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/packages ./packages
-CMD ["node", "apps/worker/dist/main.js"]
+# The scheduler daemon (queue worker + repeatable-job sync) is the actual
+# long-running process — main.ts's bare NestJS app has nothing to serve yet.
+CMD ["node", "apps/worker/dist/scheduler/daemon.js"]

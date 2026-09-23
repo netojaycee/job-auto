@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { getEffectiveWallet } from "@/lib/wallet";
+import { getEffectiveWallet } from "@job-auto/wallet";
 
 export async function GET() {
   const session = await getSession();

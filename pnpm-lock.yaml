@@ -16,12 +16,18 @@ importers:
       '@job-auto/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@job-auto/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@job-auto/storage':
         specifier: workspace:*
         version: link:../../packages/storage
       '@job-auto/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@job-auto/wallet':
+        specifier: workspace:*
+        version: link:../../packages/wallet
       better-auth:
         specifier: ^1.7.5
         version: 1.7.5(drizzle-kit@0.31.11)(drizzle-orm@0.44.7(kysely@0.29.6)(postgres@3.4.9))(next@16.3.5(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.11)
@@ -77,12 +83,18 @@ importers:
       '@job-auto/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@job-auto/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+      '@job-auto/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@job-auto/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@nestjs/bullmq':
-        specifier: ^11.0.0
-        version: 11.0.5(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.0.4)(bullmq@5.81.5(supports-color@7.2.0))
+      '@job-auto/wallet':
+        specifier: workspace:*
+        version: link:../../packages/wallet
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -92,9 +104,6 @@ importers:
       '@nestjs/platform-express':
         specifier: ^12.0.1
         version: 12.0.4(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.0.4)(supports-color@7.2.0)
-      bullmq:
-        specifier: ^5.34.0
-        version: 5.81.5(supports-color@7.2.0)
       dotenv:
         specifier: ^18.0.2
         version: 18.0.2
@@ -198,6 +207,22 @@ importers:
         specifier: ^5.9.0
         version: 5.9.3
 
+  packages/queue:
+    dependencies:
+      bullmq:
+        specifier: 5.34.0
+        version: 5.34.0(supports-color@7.2.0)
+      ioredis:
+        specifier: 5.11.1
+        version: 5.11.1(supports-color@7.2.0)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.4
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+
   packages/storage:
     dependencies:
       '@aws-sdk/client-s3':
@@ -216,6 +241,25 @@ importers:
 
   packages/types:
     devDependencies:
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+
+  packages/wallet:
+    dependencies:
+      '@job-auto/db':
+        specifier: workspace:*
+        version: link:../db
+      '@job-auto/types':
+        specifier: workspace:*
+        version: link:../types
+      drizzle-orm:
+        specifier: 0.44.7
+        version: 0.44.7(kysely@0.29.6)(postgres@3.4.9)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.4
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
@@ -1445,19 +1489,6 @@ packages:
       '@emnapi/core': ^1.7.1 || ^2.0.0-alpha.4
       '@emnapi/runtime': ^1.7.1 || ^2.0.0-alpha.4
 
-  '@nestjs/bull-shared@11.0.5':
-    resolution: {integrity: sha512-QI7GHPk4oePBwszAZn/Kz5hgB79KijB1RDoo+E/BrSt33sHUrvRZXVyO0+knZleyloRYy0LT2VwsqSP/aQvg4Q==}
-    peerDependencies:
-      '@nestjs/common': ^10.0.0 || ^11.0.0
-      '@nestjs/core': ^10.0.0 || ^11.0.0
-
-  '@nestjs/bullmq@11.0.5':
-    resolution: {integrity: sha512-u0VGVc5aER8A+4jEYXDin2rtqIHR8sFL68RUgNDgZslvjdeb1QL4CF+Sr0v4zMXJEfaLSVD606Oq0cryNNCxHg==}
-    peerDependencies:
-      '@nestjs/common': ^10.0.0 || ^11.0.0
-      '@nestjs/core': ^10.0.0 || ^11.0.0
-      bullmq: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0
-
   '@nestjs/cli@12.0.3':
     resolution: {integrity: sha512-HofsPoiWsx6gZ7/IivaZJrgsq/3CTCb4FkCQzFu/Q3J2V+4xC7GYnit/HNB66EfuY8j3gWJCzasMKmF5VugmOA==}
     engines: {node: '>= 20.11'}
@@ -2591,14 +2622,8 @@ packages:
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
-  bullmq@5.81.5:
-    resolution: {integrity: sha512-pW7pFc/X+9AEIx91TWTdIpZ1icfbJnA0unsyzD7VICjCUw8a3qedSjej5dxxn6LjfM1kr2jvalOCGbCmoA5Kxg==}
-    engines: {node: '>=12.22.0'}
-    peerDependencies:
-      redis: '>=5.0.0'
-    peerDependenciesMeta:
-      redis:
-        optional: true
+  bullmq@5.34.0:
+    resolution: {integrity: sha512-TyzeYDkIGkooYUn/P1CeiJW3Am1TboC3unwhlg1cJIwKksoyuRp97TkHyCZcwLchXbYCUtsGBZFUYf/lTAhdSg==}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -3965,8 +3990,8 @@ packages:
     resolution: {integrity: sha512-4kmO/MdyUIkLIvTPr8VHLil4AtoKIoniWPIEk5+CDy0xnWC84azhSFmuJ7PxZdsYtiP5kEeQsORAVIeMgxT+Hw==}
     hasBin: true
 
-  msgpackr@2.0.5:
-    resolution: {integrity: sha512-cef05H/dSYpLpqp3sj/qyZh5vhUYCalnaLO7j1yOmpsR0y/XwLVtK7r5gn+U/F7CTEfMowcGhlUQJDLcLf7jcA==}
+  msgpackr@1.12.1:
+    resolution: {integrity: sha512-4EUH9tQHnMmEgzW/MdAP0KIfa1T9AF+htl0ffe2n5vb2EKn9y2co8ccpgWko6S52Jy1PQZKwRnx5/KkYjtd9MQ==}
 
   multer@2.4.0:
     resolution: {integrity: sha512-7dqa0ZcFfzbefdTuIkzOSMvZWC0J7FLqBOjJUZvDCXShIURWKxAyTT1wHhnE5q19c7jOJf43IYYKjBmZVZmvhg==}
@@ -4801,6 +4826,11 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  uuid@9.0.1:
+    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+    hasBin: true
 
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
@@ -6010,20 +6040,6 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
-  '@nestjs/bull-shared@11.0.5(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.0.4)':
-    dependencies:
-      '@nestjs/common': 12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
-      '@nestjs/core': 12.0.4(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@12.0.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      tslib: 2.8.1
-
-  '@nestjs/bullmq@11.0.5(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.0.4)(bullmq@5.81.5(supports-color@7.2.0))':
-    dependencies:
-      '@nestjs/bull-shared': 11.0.5(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.0.4)
-      '@nestjs/common': 12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
-      '@nestjs/core': 12.0.4(@nestjs/common@12.0.4(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/platform-express@12.0.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      bullmq: 5.81.5(supports-color@7.2.0)
-      tslib: 2.8.1
-
   '@nestjs/cli@12.0.3(@types/node@24.13.6)(prettier@3.9.8)':
     dependencies:
       '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
@@ -6690,7 +6706,7 @@ snapshots:
       obug: 2.2.1
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@24.13.6)(@vitest/coverage-v8@4.1.11)(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+      vitest: 4.1.11(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.0(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
   '@vitest/expect@4.1.11':
     dependencies:
@@ -6708,7 +6724,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 8.3.0(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)
-    optional: true
 
   '@vitest/mocker@4.1.11(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))':
     dependencies:
@@ -6996,14 +7011,15 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bullmq@5.81.5(supports-color@7.2.0):
+  bullmq@5.34.0(supports-color@7.2.0):
     dependencies:
       cron-parser: 4.9.0
       ioredis: 5.11.1(supports-color@7.2.0)
-      msgpackr: 2.0.5
+      msgpackr: 1.12.1
       node-abort-controller: 3.1.1
       semver: 7.8.5
       tslib: 2.8.1
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
 
@@ -8450,7 +8466,7 @@ snapshots:
       '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.4
     optional: true
 
-  msgpackr@2.0.5:
+  msgpackr@1.12.1:
     optionalDependencies:
       msgpackr-extract: 3.0.4
 
@@ -9422,6 +9438,8 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  uuid@9.0.1: {}
+
   vary@1.1.2: {}
 
   vite-tsconfig-paths@5.1.4(supports-color@7.2.0)(typescript@6.0.3)(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)):
@@ -9448,7 +9466,6 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
       tsx: 4.23.15
-    optional: true
 
   vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15):
     dependencies:
@@ -9491,7 +9508,6 @@ snapshots:
       '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
     transitivePeerDependencies:
       - msw
-    optional: true
 
   vitest@4.1.11(@types/node@24.13.6)(@vitest/coverage-v8@4.1.11)(vite@8.3.0(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)):
     dependencies:

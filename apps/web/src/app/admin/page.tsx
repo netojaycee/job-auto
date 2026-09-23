@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [newClusterName, setNewClusterName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
+  const [runNowStatus, setRunNowStatus] = useState<Record<string, string>>({});
 
   async function loadUsers() {
     const res = await fetch("/api/admin/users");
@@ -85,6 +86,19 @@ export default function AdminPage() {
     }
     setGrantAmounts((prev) => ({ ...prev, [userId]: "" }));
     loadUsers();
+  }
+
+  async function handleRunNow(userId: string) {
+    setRunNowStatus((prev) => ({ ...prev, [userId]: "queuing…" }));
+    const res = await fetch("/api/admin/agent/run-now", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    setRunNowStatus((prev) => ({
+      ...prev,
+      [userId]: res.ok ? "queued" : "failed to queue",
+    }));
   }
 
   async function handleCreateCluster(e: React.FormEvent) {
@@ -163,6 +177,7 @@ export default function AdminPage() {
               <th>Cluster</th>
               <th>Balance</th>
               <th>Grant</th>
+              <th>Agent</th>
             </tr>
           </thead>
           <tbody>
@@ -203,6 +218,18 @@ export default function AdminPage() {
                       Grant
                     </button>
                   </div>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => handleRunNow(u.id)}
+                    className="rounded border px-2 py-1 text-xs"
+                  >
+                    Run now
+                  </button>
+                  {runNowStatus[u.id] && (
+                    <span className="ml-1 text-xs text-gray-500">{runNowStatus[u.id]}</span>
+                  )}
                 </td>
               </tr>
             ))}

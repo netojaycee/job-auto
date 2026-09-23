@@ -43,6 +43,9 @@ export default function DashboardPage() {
         <Link className="text-sm underline" href="/preferences">
           Job preferences
         </Link>
+        <Link className="text-sm underline" href="/runs">
+          Agent activity
+        </Link>
       </div>
       <button
         className="rounded border px-3 py-2"

@@ -2,6 +2,7 @@ import { eq, notInArray } from "drizzle-orm";
 import { getDb, applications, jobPostings, jobPreferences, profiles } from "@job-auto/db";
 import { structuredFilter } from "./filter";
 import { scoreJobAgainstProfile } from "./score-job";
+import { isFuzzyDuplicate, type PastApplication } from "./fuzzy-dedup";
 
 const SCORE_THRESHOLD = 60;
 /** Cap LLM calls per run — real production sizing lives in ARCHITECTURE.md §9/§10. */
@@ -39,16 +40,30 @@ export async function shortlistJobsForUser(userId: string): Promise<ShortlistRes
   };
 
   const existingApplications = await db
-    .select({ jobPostingId: applications.jobPostingId })
+    .select({
+      jobPostingId: applications.jobPostingId,
+      company: jobPostings.company,
+      title: jobPostings.title,
+      createdAt: applications.createdAt,
+    })
     .from(applications)
+    .innerJoin(jobPostings, eq(jobPostings.id, applications.jobPostingId))
     .where(eq(applications.userId, userId));
   const alreadyAppliedIds = existingApplications.map((a) => a.jobPostingId);
+  const pastApplications: PastApplication[] = existingApplications.map((a) => ({
+    company: a.company,
+    title: a.title,
+    createdAt: a.createdAt,
+  }));
 
   const allPostings = alreadyAppliedIds.length
     ? await db.select().from(jobPostings).where(notInArray(jobPostings.id, alreadyAppliedIds))
     : await db.select().from(jobPostings);
 
-  const filtered = structuredFilter(allPostings, prefs).slice(0, MAX_CANDIDATES_TO_SCORE);
+  const structurallyFiltered = structuredFilter(allPostings, prefs);
+  const filtered = structurallyFiltered
+    .filter((posting) => !isFuzzyDuplicate(posting, pastApplications))
+    .slice(0, MAX_CANDIDATES_TO_SCORE);
 
   const scored: ShortlistResult[] = [];
   for (const posting of filtered) {

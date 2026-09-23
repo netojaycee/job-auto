@@ -191,13 +191,17 @@ export const applications = pgTable(
   ],
 );
 
-export const applicationChannels = pgTable("application_channels", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id),
-  provider: varchar("provider", { length: 20 }).notNull().default("gmail"),
-  oauthTokens: jsonb("oauth_tokens"),
-  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const applicationChannels = pgTable(
+  "application_channels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    provider: varchar("provider", { length: 20 }).notNull().default("gmail"),
+    oauthTokens: jsonb("oauth_tokens"),
+    connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("application_channels_user_provider_idx").on(table.userId, table.provider)],
+);
 
 export const profileFeedback = pgTable("profile_feedback", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -225,6 +229,8 @@ export const crawlRuns = pgTable("crawl_runs", {
   sourceId: uuid("source_id").notNull().references(() => jobSources.id),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
+  status: varchar("status", { length: 20 }).notNull().default("running"),
   postingsFound: integer("postings_found").notNull().default(0),
   postingsNew: integer("postings_new").notNull().default(0),
+  errorSummary: text("error_summary"),
 });

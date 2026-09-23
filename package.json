@@ -10,6 +10,7 @@
     "dev:web": "pnpm --filter @job-auto/web dev",
     "dev:worker": "pnpm --filter @job-auto/worker start:dev",
     "db:generate": "pnpm --filter @job-auto/db generate",
-    "db:migrate": "pnpm --filter @job-auto/db migrate"
+    "db:migrate": "pnpm --filter @job-auto/db migrate",
+    "agent:run": "pnpm --filter @job-auto/worker agent:run"
   }
 }

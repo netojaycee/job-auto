@@ -21,6 +21,12 @@ const SEED_SOURCES = [
     adapterKey: "remoteok",
     robotsNotes: "Free API; ToS requires attribution linking back to remoteok.com",
   },
+  {
+    name: "Ashby - Ashby",
+    type: "api" as const,
+    baseUrl: "ashby",
+    adapterKey: "ashby",
+  },
 ];
 
 export async function seedJobSources(): Promise<void> {

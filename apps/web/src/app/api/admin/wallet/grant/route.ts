@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin";
-import { grantCredits } from "@/lib/wallet";
+import { grantCredits } from "@job-auto/wallet";
 
 export async function POST(request: Request) {
   const session = await requireAdminSession();

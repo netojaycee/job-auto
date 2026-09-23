@@ -4,9 +4,10 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
-  - msgpackr-extract
   - unrs-resolver
+
+# msgpackr-extract is an optional native accelerator for BullMQ's msgpackr
+# dependency — msgpackr falls back to a pure-JS implementation without it,
+# so we explicitly decline to build it rather than approve it.
 allowBuilds:
-  esbuild: set this to true or false
-  msgpackr-extract: set this to true or false
-  unrs-resolver: set this to true or false
+  msgpackr-extract: false

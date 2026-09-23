@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb, jobSources, jobPostings, crawlRuns } from "@job-auto/db";
 import { ADAPTERS } from "./adapters/index";
 import type { NormalizedPosting } from "./types";
+import { checkAdapterHealth } from "./health";
 
 function contentHash(posting: NormalizedPosting): string {
   return createHash("sha256")
@@ -26,7 +27,13 @@ export async function ingestSource(sourceId: string): Promise<{ found: number; n
   } catch (err) {
     await db
       .update(crawlRuns)
-      .set({ finishedAt: new Date(), postingsFound: 0, postingsNew: 0 })
+      .set({
+        finishedAt: new Date(),
+        status: "failed",
+        postingsFound: 0,
+        postingsNew: 0,
+        errorSummary: String(err),
+      })
       .where(eq(crawlRuns.id, crawlRun.id));
     throw err;
   }
@@ -72,7 +79,12 @@ export async function ingestSource(sourceId: string): Promise<{ found: number; n
 
   await db
     .update(crawlRuns)
-    .set({ finishedAt: new Date(), postingsFound: postings.length, postingsNew: newCount })
+    .set({
+      finishedAt: new Date(),
+      status: "completed",
+      postingsFound: postings.length,
+      postingsNew: newCount,
+    })
     .where(eq(crawlRuns.id, crawlRun.id));
 
   return { found: postings.length, new: newCount };
@@ -89,5 +101,12 @@ export async function ingestAllSources(): Promise<void> {
     } catch (err) {
       console.error(`[ingest] ${source.name} failed:`, err);
     }
+  }
+
+  const unhealthy = await checkAdapterHealth();
+  for (const source of unhealthy) {
+    console.warn(
+      `[ingest] ADAPTER UNHEALTHY: ${source.name} has failed its last ${source.consecutiveFailures} crawl runs — likely needs the adapter updated for a source format change. Last error: ${source.lastError}`,
+    );
   }
 }

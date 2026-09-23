@@ -49,3 +49,45 @@ export async function grantCredits(
 
   return updated;
 }
+
+/**
+ * Debits credits for a metered agent action (parse/score/tailor/apply — see
+ * ARCHITECTURE.md §6). Throws if the wallet can't cover it — callers must
+ * check balance BEFORE doing the paid work, not after, per the non-negotiables.
+ */
+export async function debitCredits(
+  user: { id: string; clusterId: string | null },
+  amount: number,
+  reason: string,
+) {
+  const db = getDb();
+  const wallet = await getEffectiveWallet(user);
+  const balance = Number(wallet.balance);
+  if (balance < amount) {
+    throw new Error(
+      `Insufficient credits: wallet ${wallet.id} has ${balance}, need ${amount} for ${reason}`,
+    );
+  }
+
+  const [updated] = await db
+    .update(wallets)
+    .set({ balance: (balance - amount).toFixed(2) })
+    .where(eq(wallets.id, wallet.id))
+    .returning();
+
+  await db.insert(walletLedger).values({
+    walletId: wallet.id,
+    delta: (-amount).toFixed(2),
+    reason,
+  });
+
+  return updated;
+}
+
+export async function hasSufficientBalance(
+  user: { id: string; clusterId: string | null },
+  amount: number,
+): Promise<boolean> {
+  const wallet = await getEffectiveWallet(user);
+  return Number(wallet.balance) >= amount;
+}

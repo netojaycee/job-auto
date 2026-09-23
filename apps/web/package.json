@@ -11,8 +11,10 @@
   "dependencies": {
     "@job-auto/ai": "workspace:*",
     "@job-auto/db": "workspace:*",
+    "@job-auto/queue": "workspace:*",
     "@job-auto/storage": "workspace:*",
     "@job-auto/types": "workspace:*",
+    "@job-auto/wallet": "workspace:*",
     "better-auth": "^1.7.5",
     "drizzle-orm": "^0.44.7",
     "mammoth": "^1.12.3",

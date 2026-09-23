@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "application_channels_user_provider_idx" ON "application_channels" USING btree ("user_id","provider");

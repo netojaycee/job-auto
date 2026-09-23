@@ -178,7 +178,8 @@ Before first deploy: replace the placeholder domain in `deploy/Caddyfile`, and p
 
 - LinkedIn/Indeed Easy Apply automation stays off by default; Tier C is deferred, not cancelled.
 - Applications are sent from the user's own inbox (Gmail OAuth), never from a platform email address.
-- Tailoring never fabricates experience.
+- Tailoring never fabricates experience — enforced by a second AI call (`verifyNoFabrication`) that audits the tailored CV against the source data and fails closed (refuses to produce the CV) if it finds invented content, not just a prompt instruction. This was added after a real failure during development: a free-tier model invented an entire "Selected Projects" section with fabricated metrics despite being told not to. Do not remove the audit step and rely on the generation prompt alone.
+- The actual send/submit step (Gmail email, ATS portal form) defaults to **dry run** — everything through CV/cover-letter tailoring runs automatically, but contacting a real employer requires `AGENT_ALLOW_REAL_APPLY=true` to be explicitly set, and even then no channel is auto-dispatched (see `apps/worker/src/agent/run-agent-for-user.ts`). This exists because the apply step has a real-world side effect on a third party that every earlier step (crawling, scoring, tailoring) does not — treat enabling it as a deliberate decision, not a config toggle to flip during testing.
 - Dedup is enforced at the DB constraint level, not just application logic.
 - One AI-provider interface, swappable between Anthropic and local Ollama without touching call sites.
 - The server never receives application source code — only `deploy/docker-compose.yml`, `deploy/Caddyfile`, and a hand/Doppler-provisioned `.env`. CI/CD ships images and config, nothing else.
