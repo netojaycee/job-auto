@@ -183,3 +183,18 @@ Before first deploy: replace the placeholder domain in `deploy/Caddyfile`, and p
 - Dedup is enforced at the DB constraint level, not just application logic.
 - One AI-provider interface, swappable between Anthropic and local Ollama without touching call sites.
 - The server never receives application source code — only `deploy/docker-compose.yml`, `deploy/Caddyfile`, and a hand/Doppler-provisioned `.env`. CI/CD ships images and config, nothing else.
+
+## 13. Speculative outreach to recently-funded companies
+
+A second, distinct lead pipeline alongside job-board applications: instead of a posted opening, the source is a funding-news article, and the "contact" is a guessed email address rather than a confirmed application channel. This is meaningfully higher-risk than replying to a real job posting — there is no confirmed opening, and the recipient address is a guess — so it gets its own set of constraints, not just a variant of Tier A/B:
+
+**Data sources (free scraping, by explicit choice over paid APIs like Crunchbase):**
+- US: `https://techcrunch.com/tag/funding/feed/`
+- Europe: `https://tech.eu/feed/`
+- Nigeria/Africa: `https://techcabal.com/tag/funding/feed/`
+
+All three are plain RSS feeds, parsed with a small regex-based parser (`apps/worker/src/leads/rss.ts`) rather than a full XML library dependency. Fetch/ingest (`ingest.ts`) has no AI involvement and is pure dedup-on-URL — cheap and safe to run frequently. Extraction into a structured lead (`extract.ts`) is a real AI call per article: it identifies whether an article is actually reporting a specific company's funding round (filtering out digests, retrospectives, and aggregate-stats pieces), and — this matters — identifies the company that *received* funding, not an investor named in the headline (e.g. "Terra Industries leads a $1m round in Aeon" → the lead is Aeon, not Terra Industries). Verified live: 38 real, correctly-filtered leads from 50 articles across all three regions, with plausible company/domain data (including cases where the model's own knowledge produced the *correct* real domain, not just a slugified guess).
+
+**Contact discovery (pattern-guessing, by explicit choice over a paid verification service):** `apps/worker/src/leads/email-guess.ts` tries `careers@`, `jobs@`, `talent@`, `hr@`, `hello@`, `contact@`, `info@` against the company's domain, in that priority order, with no delivery verification. This has an inherently low and unmeasured hit rate — some guesses will bounce or go unread. All candidates are kept on the lead record, not just the top pick, so a human review step or a future verification integration can improve on this later.
+
+**Not yet built:** scoring leads against a user's profile, tailoring a speculative CV/cover letter for them (would reuse `apply/tailor.ts`'s existing fabrication-audited generation, adapted for "no specific JD" input), and sending (would reuse `apply/gmail-send.ts`, under the same `AGENT_ALLOW_REAL_APPLY` gate — arguably this channel deserves an *additional*, stricter safety bar given the guessed-recipient risk, worth a deliberate decision before wiring it up). `speculative_applications` table exists in the schema for this next step.

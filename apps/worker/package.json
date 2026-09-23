@@ -18,6 +18,7 @@
     "prepare:run": "tsx src/apply/run-prepare.ts",
     "agent:run": "tsx src/agent/run.ts",
     "scheduler:start": "tsx src/scheduler/daemon.ts",
+    "leads:run": "tsx src/leads/run.ts",
     "lint": "oxlint --type-aware src/ test/",
     "test": "vitest run",
     "test:watch": "vitest",

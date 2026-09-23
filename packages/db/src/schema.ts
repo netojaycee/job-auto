@@ -234,3 +234,51 @@ export const crawlRuns = pgTable("crawl_runs", {
   postingsNew: integer("postings_new").notNull().default(0),
   errorSummary: text("error_summary"),
 });
+
+// Speculative/cold outreach to recently-funded companies — a distinct
+// pipeline from job-board applications (no posted opening, guessed contact
+// email). See ARCHITECTURE.md §13.
+export const fundingArticles = pgTable(
+  "funding_articles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sourceFeed: varchar("source_feed", { length: 40 }).notNull(),
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    description: text("description"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    processed: boolean("processed").notNull().default(false),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("funding_articles_url_idx").on(table.url)],
+);
+
+export const fundingLeads = pgTable("funding_leads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  articleId: uuid("article_id").notNull().references(() => fundingArticles.id),
+  companyName: text("company_name").notNull(),
+  domain: text("domain"),
+  fundingAmount: text("funding_amount"),
+  summary: text("summary"),
+  guessedEmail: text("guessed_email"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const speculativeApplications = pgTable(
+  "speculative_applications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    leadId: uuid("lead_id").notNull().references(() => fundingLeads.id),
+    status: applicationStatusEnum("status").notNull().default("shortlisted"),
+    matchScore: integer("match_score"),
+    matchReasoning: text("match_reasoning"),
+    tailoredCvRef: text("tailored_cv_ref"),
+    coverLetterRef: text("cover_letter_ref"),
+    appliedAt: timestamp("applied_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("speculative_applications_user_lead_idx").on(table.userId, table.leadId),
+  ],
+);
