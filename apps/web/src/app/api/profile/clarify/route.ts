@@ -29,18 +29,25 @@ export async function POST(request: Request) {
     answer: answers[i]?.trim() || qa.answer,
   }));
 
-  const canonicalProfileText = await synthesizeCanonicalProfile({
-    parsedCv: existing.parsedCvJson as ParsedCv,
-    aboutMeText: existing.aboutMeText,
-    linkedinUrl: existing.linkedinUrl,
-    otherLinks: existing.otherLinks ?? [],
-    clarifyingQa,
-  });
+  try {
+    const canonicalProfileText = await synthesizeCanonicalProfile({
+      parsedCv: existing.parsedCvJson as ParsedCv,
+      aboutMeText: existing.aboutMeText,
+      linkedinUrl: existing.linkedinUrl,
+      otherLinks: existing.otherLinks ?? [],
+      clarifyingQa,
+    });
 
-  await db
-    .update(profiles)
-    .set({ clarifyingQa, canonicalProfileText, canonicalProfileUpdatedAt: new Date() })
-    .where(eq(profiles.userId, userId));
+    await db
+      .update(profiles)
+      .set({ clarifyingQa, canonicalProfileText, canonicalProfileUpdatedAt: new Date() })
+      .where(eq(profiles.userId, userId));
 
-  return NextResponse.json({ clarifyingQa, canonicalProfileText });
+    return NextResponse.json({ clarifyingQa, canonicalProfileText });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Couldn't save answers — try again." },
+      { status: 502 },
+    );
+  }
 }

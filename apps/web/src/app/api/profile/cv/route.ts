@@ -39,46 +39,53 @@ export async function POST(request: Request) {
     );
   }
 
-  const key = `cvs/${userId}/${Date.now()}-${file.name}`;
-  const [parsedCv] = await Promise.all([
-    parseCvText(cvText),
-    uploadObject(key, buffer, file.type),
-  ]);
+  try {
+    const key = `cvs/${userId}/${Date.now()}-${file.name}`;
+    const [parsedCv] = await Promise.all([
+      parseCvText(cvText),
+      uploadObject(key, buffer, file.type),
+    ]);
 
-  const db = getDb();
-  const [existing] = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
+    const db = getDb();
+    const [existing] = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
 
-  const [canonicalProfileText, clarifyingQuestions] = await Promise.all([
-    synthesizeCanonicalProfile({
-      parsedCv,
-      aboutMeText: existing?.aboutMeText ?? null,
-      linkedinUrl: existing?.linkedinUrl ?? null,
-      otherLinks: existing?.otherLinks ?? [],
-    }),
-    generateClarifyingQuestions(parsedCv),
-  ]);
-  const clarifyingQa = clarifyingQuestions.map((question) => ({ question, answer: null }));
+    const [canonicalProfileText, clarifyingQuestions] = await Promise.all([
+      synthesizeCanonicalProfile({
+        parsedCv,
+        aboutMeText: existing?.aboutMeText ?? null,
+        linkedinUrl: existing?.linkedinUrl ?? null,
+        otherLinks: existing?.otherLinks ?? [],
+      }),
+      generateClarifyingQuestions(parsedCv),
+    ]);
+    const clarifyingQa = clarifyingQuestions.map((question) => ({ question, answer: null }));
 
-  await db
-    .insert(profiles)
-    .values({
-      userId,
-      rawCvFileRef: key,
-      parsedCvJson: parsedCv,
-      clarifyingQa,
-      canonicalProfileText,
-      canonicalProfileUpdatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: profiles.userId,
-      set: {
+    await db
+      .insert(profiles)
+      .values({
+        userId,
         rawCvFileRef: key,
         parsedCvJson: parsedCv,
         clarifyingQa,
         canonicalProfileText,
         canonicalProfileUpdatedAt: new Date(),
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: profiles.userId,
+        set: {
+          rawCvFileRef: key,
+          parsedCvJson: parsedCv,
+          clarifyingQa,
+          canonicalProfileText,
+          canonicalProfileUpdatedAt: new Date(),
+        },
+      });
 
-  return NextResponse.json({ parsedCv, canonicalProfileText, clarifyingQa });
+    return NextResponse.json({ parsedCv, canonicalProfileText, clarifyingQa });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Couldn't parse this CV — try again." },
+      { status: 502 },
+    );
+  }
 }

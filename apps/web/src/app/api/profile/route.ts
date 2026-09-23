@@ -38,13 +38,20 @@ export async function POST(request: Request) {
 
   let canonicalProfileText = existing?.canonicalProfileText ?? null;
   if (existing?.parsedCvJson) {
-    canonicalProfileText = await synthesizeCanonicalProfile({
-      parsedCv: existing.parsedCvJson as ParsedCv,
-      aboutMeText,
-      linkedinUrl,
-      otherLinks,
-      clarifyingQa: existing.clarifyingQa ?? undefined,
-    });
+    try {
+      canonicalProfileText = await synthesizeCanonicalProfile({
+        parsedCv: existing.parsedCvJson as ParsedCv,
+        aboutMeText,
+        linkedinUrl,
+        otherLinks,
+        clarifyingQa: existing.clarifyingQa ?? undefined,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Couldn't update your profile — try again." },
+        { status: 502 },
+      );
+    }
   }
 
   await db

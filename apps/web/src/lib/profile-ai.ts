@@ -112,10 +112,17 @@ ${JSON.stringify(parsedCv, null, 2)}
 
 Canonical profile:
 ${canonicalProfileText}`,
-    maxTokens: 500,
+    // Some free-tier reasoning models spend part of the token budget on
+    // hidden reasoning before the JSON answer — 500 was too tight and
+    // truncated output often enough to matter in practice.
+    maxTokens: 900,
     temperature: 0.2,
   });
 
   const json = extractJson(result.text);
-  return JSON.parse(json) as JobPreferencesSuggestion;
+  try {
+    return JSON.parse(json) as JobPreferencesSuggestion;
+  } catch {
+    throw new Error("AI returned invalid preference suggestions — try again.");
+  }
 }

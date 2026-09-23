@@ -25,10 +25,16 @@ export async function POST() {
     );
   }
 
-  const suggestion = await suggestJobPreferences(
-    profile.parsedCvJson as ParsedCv,
-    profile.canonicalProfileText,
-  );
-
-  return NextResponse.json({ suggestion });
+  try {
+    const suggestion = await suggestJobPreferences(
+      profile.parsedCvJson as ParsedCv,
+      profile.canonicalProfileText,
+    );
+    return NextResponse.json({ suggestion });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Couldn't generate suggestions." },
+      { status: 502 },
+    );
+  }
 }
