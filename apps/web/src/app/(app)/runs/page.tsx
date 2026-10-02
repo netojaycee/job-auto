@@ -104,6 +104,47 @@ export default function RunsPage() {
                     </div>
                   </div>
                   {a.matchReasoning && <p className="mt-2 text-muted-foreground">{a.matchReasoning}</p>}
+                  {a.status === "tailoring" && !a.applicationEmail && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Portal-only listing — no auto-submit; CV/cover letter are ready for you to submit yourself.
+                    </p>
+                  )}
+                  {a.status === "applied" && a.method === "email" && (
+                    <p className="mt-2 text-xs text-muted-foreground">Sent via your Gmail.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60">
+        <CardHeader>
+          <CardTitle className="font-heading text-base">Cold outreach</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-20 w-full" />
+          ) : !data?.outreach.length ? (
+            <EmptyState label="No outreach yet." />
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {data.outreach.map((o) => (
+                <li key={o.id} className="rounded-lg border border-border/60 p-4 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">
+                      {o.company}
+                      {o.contactEmail && (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          — {o.contactEmail}
+                          {o.contactEmailGuessed && " (guessed, not verified)"}
+                        </span>
+                      )}
+                    </span>
+                    <StatusBadge status={o.status} />
+                  </div>
                 </li>
               ))}
             </ul>

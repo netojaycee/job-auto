@@ -165,6 +165,10 @@ export const jobPostings = pgTable(
     location: text("location"),
     description: text("description").notNull(),
     contentHash: text("content_hash").notNull(),
+    // Set when a posting (manually pasted, or rarely a crawled one) lists a
+    // direct apply-by-email address — drives Tier A email dispatch. Null
+    // means portal-only (Tier B) or unknown.
+    applicationEmail: text("application_email"),
     postedAt: timestamp("posted_at", { withTimezone: true }),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -269,7 +273,17 @@ export const speculativeApplications = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull().references(() => users.id),
-    leadId: uuid("lead_id").notNull().references(() => fundingLeads.id),
+    // Null when this row came from a user-submitted cold email (companyName/
+    // contactEmail/context below are populated instead of joining a lead).
+    leadId: uuid("lead_id").references(() => fundingLeads.id),
+    companyName: text("company_name"),
+    contactEmail: text("contact_email"),
+    // True when contactEmail was resolved by pattern-guessing (see
+    // leads/email-guess.ts) rather than typed in by the user — surfaced in
+    // the UI as "guessed, not verified" so confidence isn't overstated.
+    contactEmailGuessed: boolean("contact_email_guessed").notNull().default(false),
+    emailCandidates: jsonb("email_candidates").$type<string[]>(),
+    context: text("context"),
     status: applicationStatusEnum("status").notNull().default("shortlisted"),
     matchScore: integer("match_score"),
     matchReasoning: text("match_reasoning"),

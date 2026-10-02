@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+import * as nodePath from "path";
+dotenv.config({ path: nodePath.resolve(__dirname, "../../../../.env") });
 import { eq } from "drizzle-orm";
 import { getDb, users } from "@job-auto/db";
 import { runAgentForUser } from "./run-agent-for-user";

@@ -1,0 +1,2 @@
+ALTER TABLE "speculative_applications" ADD COLUMN "contact_email_guessed" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "speculative_applications" ADD COLUMN "email_candidates" jsonb;

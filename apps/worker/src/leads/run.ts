@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+import * as nodePath from "path";
+dotenv.config({ path: nodePath.resolve(__dirname, "../../../../.env") });
 import { ingestFundingArticles } from "./ingest";
 import { extractLeadsFromArticles } from "./extract";
 

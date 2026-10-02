@@ -33,7 +33,7 @@ export async function sendDailyDigest(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "job-auto <onboarding@resend.dev>",
+      from: "job-auto <notification@mail.johnedeh.com>",
       to: [toEmail],
       subject: `Your daily job matches (${items.length})`,
       html: `<h2>Today's shortlisted jobs</h2><ul>${itemsHtml}</ul>${suggestionsHtml}`,

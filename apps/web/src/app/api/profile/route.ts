@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { getDb, profiles } from "@job-auto/db";
+import { eq, and } from "drizzle-orm";
+import { getDb, profiles, applicationChannels } from "@job-auto/db";
 import type { ParsedCv } from "@job-auto/types";
 import { getSession } from "@/lib/session";
 import { synthesizeCanonicalProfile } from "@/lib/profile-ai";
@@ -18,7 +18,16 @@ export async function GET() {
     .where(eq(profiles.userId, session.user.id))
     .limit(1);
 
-  return NextResponse.json({ profile: profile ?? null });
+  const [gmailChannel] = await db
+    .select({ connectedAt: applicationChannels.connectedAt })
+    .from(applicationChannels)
+    .where(and(eq(applicationChannels.userId, session.user.id), eq(applicationChannels.provider, "gmail")))
+    .limit(1);
+
+  return NextResponse.json({
+    profile: profile ?? null,
+    gmailConnectedAt: gmailChannel?.connectedAt ?? null,
+  });
 }
 
 export async function POST(request: Request) {

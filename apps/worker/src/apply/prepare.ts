@@ -1,23 +1,9 @@
 import { eq } from "drizzle-orm";
-import { getDb, applications, jobPostings, profiles } from "@job-auto/db";
+import { getDb, applications, jobPostings, profiles, users } from "@job-auto/db";
 import { uploadObject } from "@job-auto/storage";
 import type { ParsedCv } from "@job-auto/types";
-import { generateCoverLetter, needsCoverLetter, tailorCv, verifyNoFabrication } from "./tailor";
-
-async function tailorCvVerified(parsedCv: ParsedCv, job: Parameters<typeof tailorCv>[1]): Promise<string> {
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const text = await tailorCv(parsedCv, job);
-    const check = await verifyNoFabrication(text, parsedCv);
-    if (check.ok) return text;
-    console.warn(
-      `[prepare] tailored CV attempt ${attempt} contained fabricated claims, ${attempt < 3 ? "retrying" : "giving up"}:`,
-      check.fabricatedClaims,
-    );
-  }
-  throw new Error(
-    "Tailored CV failed the fabrication check 3 times — refusing to send a CV with invented content.",
-  );
-}
+import { generateCoverLetter, needsCoverLetter, tailorCvVerified } from "./tailor";
+import { renderCvPdf } from "./pdf";
 
 export interface PreparedApplication {
   applicationId: string;
@@ -57,11 +43,15 @@ export async function prepareApplication(applicationId: string): Promise<Prepare
     throw new Error(`User ${application.userId} has no parsed CV/profile to tailor from`);
   }
 
+  const [userRow] = await db.select().from(users).where(eq(users.id, application.userId)).limit(1);
+  if (!userRow) throw new Error(`Unknown user: ${application.userId}`);
+
   const job = { title: posting.title, company: posting.company, description: posting.description };
 
-  const tailoredCvText = await tailorCvVerified(profile.parsedCvJson as ParsedCv, job);
-  const tailoredCvRef = `applications/${application.userId}/${application.id}/cv.txt`;
-  await uploadObject(tailoredCvRef, Buffer.from(tailoredCvText, "utf-8"), "text/plain");
+  const tailoredCvText = await tailorCvVerified(profile.parsedCvJson as ParsedCv, job, userRow.email);
+  const tailoredCvPdf = await renderCvPdf(tailoredCvText, `${posting.title} — CV`);
+  const tailoredCvRef = `applications/${application.userId}/${application.id}/cv.pdf`;
+  await uploadObject(tailoredCvRef, tailoredCvPdf, "application/pdf");
 
   let coverLetterRef: string | null = null;
   if (needsCoverLetter(job)) {

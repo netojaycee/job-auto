@@ -14,10 +14,12 @@ export interface AgentRun {
 export interface ApplicationRow {
   id: string;
   status: string;
+  method: string | null;
   matchScore: number | null;
   matchReasoning: string | null;
   title: string;
   company: string;
+  applicationEmail: string | null;
   createdAt: string;
 }
 
@@ -26,10 +28,20 @@ export interface Suggestion {
   suggestionText: string;
 }
 
+export interface OutreachRow {
+  id: string;
+  status: string;
+  company: string;
+  contactEmail: string | null;
+  contactEmailGuessed: boolean;
+  createdAt: string;
+}
+
 interface RunsData {
   runs: AgentRun[];
   applications: ApplicationRow[];
   suggestions: Suggestion[];
+  outreach: OutreachRow[];
 }
 
 async function fetchRuns(): Promise<RunsData> {

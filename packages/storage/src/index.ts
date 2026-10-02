@@ -49,3 +49,13 @@ export async function getSignedDownloadUrl(key: string, expiresInSeconds = 3600)
   const command = new GetObjectCommand({ Bucket: getBucketName(), Key: key });
   return getSignedUrl(getR2Client(), command, { expiresIn: expiresInSeconds });
 }
+
+/** Fetches an object's full body into memory — for small generated files (tailored CVs, cover letters), not large uploads. */
+export async function downloadObject(key: string): Promise<Buffer> {
+  const result = await getR2Client().send(
+    new GetObjectCommand({ Bucket: getBucketName(), Key: key }),
+  );
+  const bytes = await result.Body?.transformToByteArray();
+  if (!bytes) throw new Error(`Object ${key} has no body`);
+  return Buffer.from(bytes);
+}

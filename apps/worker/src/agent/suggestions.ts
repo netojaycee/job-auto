@@ -36,7 +36,10 @@ Jobs this candidate scored low on:
 ${lowScoredJobs.map((j) => `- [${j.score}] ${j.title} @ ${j.company}: ${j.reasoning}`).join("\n")}
 
 What specific additions to their profile would most improve future match scores?`,
-    maxTokens: 400,
+    // Same hidden-reasoning truncation risk as score-job.ts/extract.ts on
+    // Groq's gpt-oss-120b — 400 was observed silently truncating to an
+    // empty suggestion list in live testing.
+    maxTokens: 700,
     temperature: 0.3,
   });
 

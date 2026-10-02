@@ -76,7 +76,10 @@ export async function generateClarifyingQuestions(parsedCv: ParsedCv): Promise<s
 
 Parsed CV:
 ${JSON.stringify(parsedCv, null, 2)}`,
-    maxTokens: 500,
+    // Same hidden-reasoning truncation risk as score-job.ts/extract.ts on
+    // Groq's gpt-oss-120b — 500 was observed silently truncating to an
+    // empty question list in live testing.
+    maxTokens: 700,
     temperature: 0.4,
   });
 

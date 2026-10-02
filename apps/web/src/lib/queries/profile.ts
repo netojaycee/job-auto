@@ -8,13 +8,27 @@ export interface ProfileData {
   parsedCvJson: ParsedCv | null;
   clarifyingQa: ClarifyingQa[] | null;
   canonicalProfileText: string | null;
+  gmailConnectedAt: string | null;
 }
 
 async function fetchProfile(): Promise<ProfileData | null> {
   const res = await fetch("/api/profile");
   if (!res.ok) throw new Error("Failed to load profile");
   const data = await res.json();
-  return data.profile ?? null;
+  const gmailConnectedAt: string | null = data.gmailConnectedAt ?? null;
+  if (!data.profile) {
+    if (!gmailConnectedAt) return null;
+    return {
+      linkedinUrl: null,
+      otherLinks: [],
+      aboutMeText: null,
+      parsedCvJson: null,
+      clarifyingQa: null,
+      canonicalProfileText: null,
+      gmailConnectedAt,
+    };
+  }
+  return { ...data.profile, gmailConnectedAt };
 }
 
 export function useProfileQuery() {

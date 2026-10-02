@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileUp, Loader2, Sparkles } from "lucide-react";
+import { FileUp, Loader2, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,11 +77,50 @@ function ClarifyingQuestions() {
   );
 }
 
+function GmailConnection({ connectedAt }: { connectedAt: string | null }) {
+  return (
+    <Card className="border-border/60">
+      <CardHeader>
+        <CardTitle className="font-heading text-base">Gmail</CardTitle>
+        <CardDescription>
+          Applications send from your own inbox — real Sent folder, replies come to you.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-start gap-3">
+        {connectedAt && (
+          <p className="text-sm text-foreground/90">
+            Connected {new Date(connectedAt).toLocaleDateString()}.
+          </p>
+        )}
+        <Button type="button" variant="outline" render={<a href="/api/gmail/connect" />}>
+          <Mail className="h-4 w-4" />
+          {connectedAt ? "Reconnect Gmail" : "Connect Gmail"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProfilePage() {
   const { data: profile, isLoading } = useProfileQuery();
   const uploadCv = useUploadCvMutation();
   const saveProfile = useSaveProfileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get("gmail_connected")) {
+      toast.success("Gmail connected.");
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      router.replace(pathname);
+    } else if (searchParams.get("gmail_error")) {
+      toast.error(`Gmail connection failed: ${searchParams.get("gmail_error")}`);
+      router.replace(pathname);
+    }
+  }, [searchParams, router, pathname]);
 
   const {
     register,
@@ -179,6 +220,8 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      <GmailConnection connectedAt={profile?.gmailConnectedAt ?? null} />
 
       <ClarifyingQuestions />
 
